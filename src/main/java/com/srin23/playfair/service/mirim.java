@@ -1,4 +1,4 @@
-package playfair_cipher;
+package com.srin23.playfair.service;
 
 import java.awt.AlphaComposite;
 import java.util.ArrayList;
