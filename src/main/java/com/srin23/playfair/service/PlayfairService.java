@@ -1,6 +1,7 @@
 package com.srin23.playfair.service;
 
 import com.srin23.playfair.domain.repository.PlayfairRepository;
+import com.srin23.playfair.domain.repository.dto.response.DelSpaceDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,12 +13,12 @@ import java.util.ArrayList;
 public class PlayfairService{
     private final PlayfairRepository playfairRepository;
 
-    public static char alphabetBoard[][] = new char[5][5];  //암호판
     public static boolean oddFlag = false; //글자수 출력
-    public static String zCheck ="";
+
 
     @Transactional
-    public void setBoard(String key) {  //보드만들기
+    public char[][] setBoard(String key) {  //보드만들기
+        char alphabetBoard[][] = new char[5][5];  //암호판
         String keyForSet = "";					// 중복된 문자가 제거된 문자열을 저장할 문자열.
         boolean duplicationFlag = false;		// 문자 중복을 체크하기 위한 flag 변수.
         int keyLengthCount = 0;					// alphabetBoard에 keyForSet을 넣기 위한 count변수.
@@ -28,8 +29,7 @@ public class PlayfairService{
         // 중복처리
         for( int i = 0 ; i < key.length() ; i++ ) {
             for( int j = 0 ; j < keyForSet.length() ; j++ ) {
-                if(key.charAt(i)==keyForSet.charAt(j))
-                {
+                if(key.charAt(i)==keyForSet.charAt(j)) {
                     duplicationFlag = true;
                     break;
                 }
@@ -42,68 +42,103 @@ public class PlayfairService{
         //System.out.println(keyForSet);
 
         //배열에 대입
-        for( int i = 0 ; i < alphabetBoard.length ; i++ )
-        {
-            for( int j = 0; j <alphabetBoard[i].length ; j++ )
-            {
+        for( int i = 0 ; i < alphabetBoard.length ; i++ ) {
+            for( int j = 0; j <alphabetBoard[i].length ; j++ ) {
                 alphabetBoard[i][j] = keyForSet.charAt(keyLengthCount++);
             }
+        }
+
+        return alphabetBoard;
+    }
+
+    @Transactional
+    public DelSpaceDto DelSpace(String str){
+        String zCheck ="";
+        String blankCheck="";
+        for( int i = 0 ; i < str.length() ; i++) {
+            //공백제거
+            if(str.charAt(i)==' ') {
+                str = str.substring(0,i)+str.substring(i+1,str.length());   //공백 앞뒤로 잘라 붙여 공백 제거 후 str에 저장
+                blankCheck+=10; //공백확인 +10
+            }else {
+                blankCheck+=0;  //공백이 없으면 0더함
+            }
+            //z를 q로 바꿔줘서 처리함.
+            if(str.charAt(i)=='Z'){
+                str = str.substring(0,i)+'Q'+str.substring(i+1,str.length());   //현재 위치로 하여 Z를 Q로 변경
+                zCheck+=1;
+            }else {
+                zCheck+=0;
+            }
+        }
+        DelSpaceDto delSpaceDto = new DelSpaceDto(zCheck, blankCheck, str);
+        return delSpaceDto;
+    }
+
+    @Transactional
+    public String RealEncryption(String encryption){
+        //2개씩 끊어 공백 제거후 encryption에 저장
+        for( int i = 0 ; i < encryption.length() ; i++ ) {
+            if(encryption.charAt(i)==' ') //공백제거
+                encryption = encryption.substring(0,i)+encryption.substring(i+1,encryption.length());
+        }
+        return encryption;
+    }
+
+    @Transactional
+    public String realDecryption(String blankCheck, String decryption){
+        for( int i = 0 ; i < blankCheck.length() ; i++) {
+            if(blankCheck.charAt(i)=='1') {
+                decryption = decryption.substring(0,i)+" "+decryption.substring(i,decryption.length());
+            }
+        }
+        return decryption;
+    }
+
+    @Transactional
+    public boolean finalCheck(String text, String decryption){
+        if(decryption.equals(text)){
+            return true;
+        }else{
+            return false;
         }
     }
 
     @Transactional
-    public String strEncryption(String key, String str){    //암호화
+    public String strEncryption(char[][] alphabetBoard, String key, String str){    //암호화
         ArrayList<char[]> playFair = new ArrayList<char[]>();   //
         ArrayList<char[]> encPlayFair = new ArrayList<char[]>();    //암호문
         int x1 = 0 , x2 = 0 , y1 = 0, y2 = 0;
         String encStr ="";
 
         //암호키의 길이만큼 반복
-        for( int i = 0 ; i < str.length() ; i+=2 ) // arraylist 세팅
-        {
+        for( int i = 0 ; i < str.length() ; i+=2 ){
             char[] tmpArr = new char[2];
             tmpArr[0] = str.charAt(i);
             try{
-                if(str.charAt(i) == str.charAt(i+1)) //글이 반복되면 x추가
-                {
+                if(str.charAt(i) == str.charAt(i+1)){
                     tmpArr[1] = 'X';    //매핑한 값 2개가 같으면 뒤쪽 값을 X로 변경
                     i--;                //i+2했을때 뒤쪽 값이 나올 수 있도록 i--
                 }else{
                     tmpArr[1] = str.charAt(i+1);
                 }
-            }catch(StringIndexOutOfBoundsException e)
-            {
+            }catch(StringIndexOutOfBoundsException e) {
                 tmpArr[1] = 'X';
                 oddFlag = true;
             }
             playFair.add(tmpArr);   //매핑된 값을 playFair에 크기2 배열로 추가
         }
 
-        //playFair의 길이만큼 반복문
-        /*
-        for(int i = 0 ; i < playFair.size() ; i++)
-        {
-            //매핑된 값을 2개씩 끊어 출력
-            System.out.print(playFair.get(i)[0]+""+playFair.get(i)[1]+" ");
-        }
-        System.out.println();
-        */
-
-        for(int i = 0 ; i < playFair.size() ; i++ )
-        {
+        for(int i = 0 ; i < playFair.size() ; i++ ) {
             char[] tmpArr = new char[2];
-            for( int j = 0 ; j < alphabetBoard.length ; j++ ) //쌍자암호의 각각 위치체크
-            {
-                for( int k = 0 ; k < alphabetBoard[j].length ; k++ )
-                {
+            for( int j = 0 ; j < alphabetBoard.length ; j++ ) {
+                for( int k = 0 ; k < alphabetBoard[j].length ; k++ ) {
                     //암호테이블에서 매핑한 두개의 알파벳과 같은 알파벳의 위치를 저장
-                    if(alphabetBoard[j][k] == playFair.get(i)[0])
-                    {
+                    if(alphabetBoard[j][k] == playFair.get(i)[0]) {
                         x1 = j;
                         y1 = k;
                     }
-                    if(alphabetBoard[j][k] == playFair.get(i)[1])
-                    {
+                    if(alphabetBoard[j][k] == playFair.get(i)[1]) {
                         x2 = j;
                         y2 = k;
                     }
@@ -111,41 +146,32 @@ public class PlayfairService{
             }
 
 
-            if(x1==x2) //행이 같은경우
-            {
+            if(x1==x2){
                 tmpArr[0] = alphabetBoard[x1][(y1+1)%5];
                 tmpArr[1] = alphabetBoard[x2][(y2+1)%5];
             }
-            else if(y1==y2) //열이 같은 경우
-            {
+            else if(y1==y2) {
                 tmpArr[0] = alphabetBoard[(x1+1)%5][y1];
                 tmpArr[1] = alphabetBoard[(x2+1)%5][y2];
             }
-            else //행, 열 모두 다른경우
-            {
+            else{
                 tmpArr[0] = alphabetBoard[x2][y1];
                 tmpArr[1] = alphabetBoard[x1][y2];
             }
 
-            //계산 후, 나온 암호문 encPlayFair에 추가
             encPlayFair.add(tmpArr);
 
-        }   //playFair 배열이 끝날때까지 반복
-
-        //ArrayList를 2개씩 붙여 문자열로 전환
-        for(int i = 0 ; i < encPlayFair.size() ; i++)
-        {
-            encStr += encPlayFair.get(i)[0]+""+encPlayFair.get(i)[1]+" ";
         }
 
-        //encStr은 암호화된 문자열을 뜻함
-        //System.out.println(encStr);
+        for(int i = 0 ; i < encPlayFair.size() ; i++){
+            encStr += encPlayFair.get(i)[0]+""+encPlayFair.get(i)[1]+" ";
+        }
 
         return encStr;
     }
 
     @Transactional
-    public String strDecryption(String key, String str, String zCheck) {
+    public String strDecryption(char[][] alphabetBoard, String key, String str, String zCheck) {
         ArrayList<char[]> playFair = new ArrayList<char[]>(); //바꾸기 전 쌍자암호를 저장할 곳
         ArrayList<char[]> decPlayFair = new ArrayList<char[]>(); //바꾼 후의 쌍자암호 저장할 곳
         int x1 = 0 , x2 = 0 , y1 = 0, y2 = 0; //쌍자 암호 두 글자의 각각의 행,열 값
@@ -153,93 +179,58 @@ public class PlayfairService{
 
         int lengthOddFlag = 1;
 
-        for( int i = 0 ; i < str.length() ; i+=2 )
-        {
+        for( int i = 0 ; i < str.length() ; i+=2 ) {
             char[] tmpArr = new char[2];
             tmpArr[0] = str.charAt(i);
             tmpArr[1] = str.charAt(i+1);
             playFair.add(tmpArr);
         }
 
-
-        for(int i = 0 ; i < playFair.size() ; i++ )
-        {
+        for(int i = 0 ; i < playFair.size() ; i++ ) {
 
             char[] tmpArr = new char[2];
-            for( int j = 0 ; j < alphabetBoard.length ; j++ )
-            {
-                for( int k = 0 ; k < alphabetBoard[j].length ; k++ )
-                {
-                    if(alphabetBoard[j][k] == playFair.get(i)[0])
-                    {
+            for( int j = 0 ; j < alphabetBoard.length ; j++ ) {
+                for( int k = 0 ; k < alphabetBoard[j].length ; k++ ) {
+                    if(alphabetBoard[j][k] == playFair.get(i)[0]){
                         x1 = j;
                         y1 = k;
                     }
-                    if(alphabetBoard[j][k] == playFair.get(i)[1])
-                    {
+                    if(alphabetBoard[j][k] == playFair.get(i)[1]) {
                         x2 = j;
                         y2 = k;
                     }
                 }
             }
 
-            if(x1==x2) //행이 같은 경우 각각 바로 아래열 대입
-            {
+            if(x1==x2){
                 tmpArr[0] = alphabetBoard[x1][(y1+4)%5];
                 tmpArr[1] = alphabetBoard[x2][(y2+4)%5];
-            }
-            else if(y1==y2) //열이 같은 경우 각각 바로 옆 열 대입
-            {
+            }else if(y1==y2){
                 tmpArr[0] = alphabetBoard[(x1+4)%5][y1];
                 tmpArr[1] = alphabetBoard[(x2+4)%5][y2];
-            }
-            else //행, 열 다른경우 각자 대각선에 있는 곳.
-            {
+            }else {
                 tmpArr[0] = alphabetBoard[x2][y1];
                 tmpArr[1] = alphabetBoard[x1][y2];
             }
-
             decPlayFair.add(tmpArr);
-
         }
 
-        for(int i = 0 ; i < decPlayFair.size() ; i++) //중복 문자열 돌려놓음
-        {
-            if(i!=decPlayFair.size()-1 && decPlayFair.get(i)[1]=='x'
-                    && decPlayFair.get(i)[0]==decPlayFair.get(i+1)[0])
-            {
+        for(int i = 0 ; i < decPlayFair.size() ; i++){
+            if(i!=decPlayFair.size()-1 && decPlayFair.get(i)[1]=='x'&& decPlayFair.get(i)[0]==decPlayFair.get(i+1)[0]) {
                 decStr += decPlayFair.get(i)[0];
-            }
-            else
-            {
+            } else {
                 decStr += decPlayFair.get(i)[0]+""+decPlayFair.get(i)[1];
             }
         }
 
 
 
-        for(int i = 0 ; i < zCheck.length() ; i++ )//z위치 찾아서 q로 돌려놓음
-        {
-            if( zCheck.charAt(i) == '1' )
-                decStr = decStr.substring(0,i)+'z'+decStr.substring(i+1,decStr.length());
-
+        for(int i = 0 ; i < zCheck.length() ; i++ ){
+            if( zCheck.charAt(i) == '1' ) decStr = decStr.substring(0,i)+'z'+decStr.substring(i+1,decStr.length());
         }
-
-
 
         if(oddFlag) decStr = decStr.substring(0,decStr.length()-1);
 
-		/*
-		 //띄어쓰기
-		for(int i = 0 ; i < decStr.length(); i++)
-		{
-			if(i%2==lengthOddFlag){
-				decStr = decStr.substring(0, i+1)+" "+decStr.substring(i+1, decStr.length());
-				i++;
-				lengthOddFlag = ++lengthOddFlag %2;
-			}
-		}
-		*/
         return decStr;
     }
 }
