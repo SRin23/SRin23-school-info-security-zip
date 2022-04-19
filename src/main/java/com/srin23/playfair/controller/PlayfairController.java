@@ -37,6 +37,16 @@ public class PlayfairController {
         return "input";
     }
 
+    @GetMapping(value="/help")
+    public String helpPage(Model model){
+        return "help";
+    }
+
+    @GetMapping(value="/recent")
+    public String recentPage(Model model){
+        return "recent";
+    }
+
     @PostMapping(value="/playfair")
     public String inputPost(@ModelAttribute("requestDto") RequestDto requestDto, Model model){
         String key = requestDto.getEncryptionKey().toUpperCase();
@@ -53,7 +63,7 @@ public class PlayfairController {
             }
             System.out.println();
         }
-
+        model.addAttribute("alphabatBoard", alphabatBoard);
 
         DelSpaceDto delSpaceDto = playfairService.DelSpace(plainText);
         String str = delSpaceDto.getStr();
@@ -78,7 +88,14 @@ public class PlayfairController {
 
         decryption = playfairService.realDecryption(blankCheck, decryption);
 //        System.out.println("공백있는 복호문 : " + decryption);
-        model.addAttribute("decryption", decryption);
+
+
+        if(playfairService.finalCheck(plainText, decryption)){
+            model.addAttribute("decryption", decryption);
+        }else{
+            model.addAttribute("decryption", "잘못된 값으로 복호되었습니다.");
+        }
+
 
         System.out.println("복호 여부 : " + playfairService.finalCheck(plainText, decryption));;
 
