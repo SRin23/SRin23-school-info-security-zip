@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 
 @Controller
-@RequestMapping("/3204")
+@RequestMapping("")
 public class PlayfairController {
     private PlayfairService playfairService;
 
@@ -26,7 +26,7 @@ public class PlayfairController {
         this.playfairService = playfairService;
     }
 
-    @RequestMapping(value="")
+    @RequestMapping(value="/")
     public String indexPage(Model model){
         return "index";
     }
@@ -38,7 +38,7 @@ public class PlayfairController {
     }
 
     @PostMapping(value="/playfair")
-    public String inputPost(@ModelAttribute("requestDto") RequestDto requestDto){
+    public String inputPost(@ModelAttribute("requestDto") RequestDto requestDto, Model model){
         String key = requestDto.getEncryptionKey().toUpperCase();
         String plainText = requestDto.getPlainText().toUpperCase();
         System.out.println("Key : " + key);
@@ -63,17 +63,22 @@ public class PlayfairController {
 //        System.out.println("zCheck : " + zCheck);
 //        System.out.println("blankCheck : " + blankCheck);
 
+
         String encryption = playfairService.strEncryption(alphabatBoard, key, str);
 //        System.out.println("매핑된 암호문 : " + encryption);
+        model.addAttribute("mapping", encryption);
 
         encryption = playfairService.RealEncryption(encryption);
 //        System.out.println("암호문 : " + encryption);
+        model.addAttribute("encryption", encryption);
 
         String decryption = playfairService.strDecryption(alphabatBoard, key, encryption, zCheck);
 //        System.out.println("복호문 : " + decryption);
 
+
         decryption = playfairService.realDecryption(blankCheck, decryption);
 //        System.out.println("공백있는 복호문 : " + decryption);
+        model.addAttribute("decryption", decryption);
 
         System.out.println("복호 여부 : " + playfairService.finalCheck(plainText, decryption));;
 
