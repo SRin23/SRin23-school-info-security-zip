@@ -1,5 +1,6 @@
 package com.srin23.playfair.service;
 
+import com.srin23.playfair.domain.Playfair;
 import com.srin23.playfair.domain.repository.PlayfairRepository;
 import com.srin23.playfair.domain.repository.dto.response.DelSpaceDto;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -15,6 +18,22 @@ public class PlayfairService{
 
     public static boolean oddFlag = false; //글자수 출력
 
+    @Transactional
+    public void saveData(String encryptionKey, String plainText, String cryptogram){
+        Playfair playfair = new Playfair(encryptionKey, plainText, cryptogram);
+        playfairRepository.save(playfair);
+    }
+
+    @Transactional
+    public List<Playfair> findAllRecent(){
+        List<Playfair> recent = (List<Playfair>)playfairRepository.findAll();
+        return recent;
+    }
+
+    @Transactional
+    public String delSpace(String str){
+        return str.replaceAll(" ","");
+    }
 
     @Transactional
     public char[][] setBoard(String key) {  //보드만들기
@@ -216,7 +235,7 @@ public class PlayfairService{
         }
 
         for(int i = 0 ; i < decPlayFair.size() ; i++){
-            if(i!=decPlayFair.size()-1 && decPlayFair.get(i)[1]=='x'&& decPlayFair.get(i)[0]==decPlayFair.get(i+1)[0]) {
+            if(i!=decPlayFair.size()-1 && decPlayFair.get(i)[1]=='X'&& decPlayFair.get(i)[0]==decPlayFair.get(i+1)[0]) {
                 decStr += decPlayFair.get(i)[0];
             } else {
                 decStr += decPlayFair.get(i)[0]+""+decPlayFair.get(i)[1];
@@ -226,7 +245,7 @@ public class PlayfairService{
 
 
         for(int i = 0 ; i < zCheck.length() ; i++ ){
-            if( zCheck.charAt(i) == '1' ) decStr = decStr.substring(0,i)+'z'+decStr.substring(i+1,decStr.length());
+            if( zCheck.charAt(i) == '1' ) decStr = decStr.substring(0,i)+'Z'+decStr.substring(i+1,decStr.length());
         }
 
         if(oddFlag) decStr = decStr.substring(0,decStr.length()-1);

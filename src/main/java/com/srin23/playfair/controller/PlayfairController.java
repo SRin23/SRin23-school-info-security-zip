@@ -1,5 +1,6 @@
 package com.srin23.playfair.controller;
 
+import com.srin23.playfair.domain.Playfair;
 import com.srin23.playfair.domain.repository.dto.request.RequestDto;
 import com.srin23.playfair.domain.repository.dto.response.DelSpaceDto;
 import com.srin23.playfair.service.PlayfairService;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.List;
 
 /*
 처리해야할것
@@ -31,6 +34,7 @@ public class PlayfairController {
         return "index";
     }
 
+
     @GetMapping(value="/playfair")
     public String inputPage(Model model){
         model.addAttribute("requestDto", new RequestDto());
@@ -44,6 +48,12 @@ public class PlayfairController {
 
     @GetMapping(value="/recent")
     public String recentPage(Model model){
+        List<Playfair> allRecent = playfairService.findAllRecent();
+        if(allRecent.isEmpty()){
+            Playfair temp = new Playfair("-", "-", "-");
+            allRecent.add(temp);
+        }
+        model.addAttribute("allRecent", allRecent);
         return "recent";
     }
 
@@ -54,7 +64,8 @@ public class PlayfairController {
         System.out.println("Key : " + key);
         System.out.println("평문 : " + plainText);
 
-        char[][] alphabatBoard = playfairService.setBoard(key);
+        String noSpaceKey = playfairService.delSpace(key);
+        char[][] alphabatBoard = playfairService.setBoard(noSpaceKey);
 
         System.out.println("알파벳 보드");
         for(int i = 0; i<alphabatBoard.length; i++){
@@ -74,7 +85,7 @@ public class PlayfairController {
 //        System.out.println("blankCheck : " + blankCheck);
 
 
-        String encryption = playfairService.strEncryption(alphabatBoard, key, str);
+        String encryption = playfairService.strEncryption(alphabatBoard, noSpaceKey, str);
 //        System.out.println("매핑된 암호문 : " + encryption);
         model.addAttribute("mapping", encryption);
 
@@ -82,19 +93,22 @@ public class PlayfairController {
 //        System.out.println("암호문 : " + encryption);
         model.addAttribute("encryption", encryption);
 
-        String decryption = playfairService.strDecryption(alphabatBoard, key, encryption, zCheck);
+        String decryption = playfairService.strDecryption(alphabatBoard, noSpaceKey, encryption, zCheck);
 //        System.out.println("복호문 : " + decryption);
 
 
         decryption = playfairService.realDecryption(blankCheck, decryption);
-//        System.out.println("공백있는 복호문 : " + decryption);
+        System.out.println("공백있는 복호문 : " + decryption);
 
+        boolean decryptionCheck = playfairService.finalCheck(plainText, decryption);
 
-        if(playfairService.finalCheck(plainText, decryption)){
+        if(decryptionCheck){
             model.addAttribute("decryption", decryption);
+            playfairService.saveData(key, plainText, encryption);
         }else{
             model.addAttribute("decryption", "잘못된 값으로 복호되었습니다.");
         }
+
 
 
         System.out.println("복호 여부 : " + playfairService.finalCheck(plainText, decryption));;

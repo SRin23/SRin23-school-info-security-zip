@@ -1,5 +1,6 @@
 package com.srin23.playfair.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import javax.persistence.*;
@@ -19,4 +20,14 @@ public class Playfair {
 
     @Column
     private String cryptogram;  //암호문
+
+    public Playfair(String encryptionKey, String plainText, String cryptogram){
+        this.encryptionKey = encryptionKey;
+        this.plainText = plainText;
+        this.cryptogram = cryptogram;
+    }
+
+    public Playfair() {
+
+    }
 }
