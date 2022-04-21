@@ -1,7 +1,8 @@
 package com.srin23.playfair.controller;
 
 import com.srin23.playfair.domain.Playfair;
-import com.srin23.playfair.domain.repository.dto.request.RequestDto;
+import com.srin23.playfair.domain.repository.dto.request.DecryptionRequestDto;
+import com.srin23.playfair.domain.repository.dto.request.EncryptionRequestDto;
 import com.srin23.playfair.domain.repository.dto.response.DelSpaceDto;
 import com.srin23.playfair.service.PlayfairService;
 import org.springframework.stereotype.Controller;
@@ -34,11 +35,9 @@ public class PlayfairController {
         return "index";
     }
 
-
-    @GetMapping(value="/playfair")
-    public String inputPage(Model model){
-        model.addAttribute("requestDto", new RequestDto());
-        return "input";
+    @GetMapping(value="/choice")
+    public String choicePage(Model model){
+        return "choice";
     }
 
     @GetMapping(value="/help")
@@ -57,10 +56,18 @@ public class PlayfairController {
         return "recent";
     }
 
-    @PostMapping(value="/playfair")
-    public String inputPost(@ModelAttribute("requestDto") RequestDto requestDto, Model model){
-        String key = requestDto.getEncryptionKey().toUpperCase();
-        String plainText = requestDto.getPlainText().toUpperCase();
+
+
+    @GetMapping(value="/encryption")
+    public String encryptionInputPage(Model model){
+        model.addAttribute("encryptionRequestDto", new EncryptionRequestDto());
+        return "encryptionInput";
+    }
+
+    @PostMapping(value="/encryption")
+    public String encryptionInputPost(@ModelAttribute("encryptionRequestDto") EncryptionRequestDto encryptionRequestDto, Model model){
+        String key = encryptionRequestDto.getEncryptionKey().toUpperCase();
+        String plainText = encryptionRequestDto.getPlainText().toUpperCase();
         System.out.println("Key : " + key);
         System.out.println("평문 : " + plainText);
 
@@ -109,10 +116,32 @@ public class PlayfairController {
             model.addAttribute("decryption", "잘못된 값으로 복호되었습니다.");
         }
 
+        System.out.println("복호 여부 : " + playfairService.finalCheck(plainText, decryption));
+
+        return "encryptionOutput";
+    }
+
+    @GetMapping(value="/decryption")
+    public String decryptionInputPage(Model model){
+        model.addAttribute("decryptionRequestDto", new DecryptionRequestDto());
+        return "decryptionInput";
+    }
+
+    @PostMapping(value="/decryption")
+    public String decryptionInputPost(@ModelAttribute("decryptionRequestDto") DecryptionRequestDto decryptionRequestDto, Model model){
+        String key = decryptionRequestDto.getEncryptionKey().toUpperCase();
+        String encryption = decryptionRequestDto.getEncryption().toUpperCase();
+        System.out.println("Key : " + key);
+        System.out.println("암호문 : " + encryption);
+
+        String noSpaceKey = playfairService.delSpace(key);
+        char[][] alphabatBoard = playfairService.setBoard(noSpaceKey);
 
 
-        System.out.println("복호 여부 : " + playfairService.finalCheck(plainText, decryption));;
+        String decryption = playfairService.strDecryption(alphabatBoard, noSpaceKey, encryption, "");
+        model.addAttribute("decryption", decryption);
 
-        return "output";
+        playfairService.saveData(key, decryption, encryption);
+        return "decryptionOutput";
     }
 }
